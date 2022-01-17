@@ -1,29 +1,29 @@
-const   express = require('express');
-const   notes   = require('express').Router();
-const   {v4: uuidv4} = require("uuid");
+const   notes           = require('express').Router();
+const   {v4: uuidv4}    = require("uuid");
+const   dbio            = require("../db/dbio");
 
-const dbio = require("../db/dbio");
-
-const app = express();
+function errorSend (errCd, msg, res) 
+    {res.status(errCd).send(msg); console.log(msg);}
 
 // GET route
 notes.get('/notes', (req, res) => {
-    dbio.selectAll().then(res.json)
+    dbio.selectAll()
+        .then((data) => res.json(data))
+        .catch((err) => errorSend(500, "select failed: " + err, res))
 })
 
 // POST route
 notes.post('/notes', (req, res) => {
     // validate input
-    if (!req.body) 
-        {res.error("Invalid empty body")}
-
-    if (!req.body.title || !req.body.text) 
-        {res.error("Invalid body: title and text are required")}
+    if (!req.body.title || !req.body.text) {
+        errorSend(400, "Invalid body: title and text are required", res);
+        return;
+    }
 
     const insertObj = {
-        title: req.body.title,
-        text: req.body.text,
-        id: uuidv4()
+        title:  req.body.title,
+        text:   req.body.text,
+        id:     uuidv4()
     }
 
     dbio.insert(insertObj).then((response) => {
@@ -31,26 +31,28 @@ notes.post('/notes', (req, res) => {
             res.json(insertObj)
         }
         else {
-            res.error("Error: database failed to insert new post")
+            errorSend(500,"Error: database failed to insert new post: " + response, res);
+            return;
         }
     })
 })
 
 // DELETE route
 notes.delete('/notes/:id', (req, res) => {
-    if (!id) {res.error("No ID sent")}
+    if (!req.params.id) 
+        {errorSend(400, "No ID sent", res); return}
 
-    dbio.deleteId(id)
+    dbio.deleteId(req.params.id)
         .then((err) => {
-            if (err) {console.log(err)} 
+            if (err) {errorSend(500, "Delete Error: " + err, res)} 
             else {
                 console.log("Delete successful");
-                res.status(200)
+                res.status(200).send("Record deleted");
             }}
         )
         .catch((err) => {
-            console.log("Delete failed with '" + err + "'")
-            res.error(500)
+            errorSend(500, "Delete failed with '" + err + "'", res);
+            return;
         })
 })
 
