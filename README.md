@@ -21,7 +21,7 @@ Projects runs via Express and Node.  Download repository.  Run 'npm i'.  Start t
 
 Here is a link to the live website:
 
-https://stormy-waters-75704.herokuapp.com/notes
+https://stormy-waters-75704.herokuapp.com
 
 The following images show the web application's appearance and functionality:
 
